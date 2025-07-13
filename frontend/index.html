@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logical Minesweeper</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Logical Minesweeper</h1>
+
+        <div class="game-controls">
+            <div class="difficulty-selector">
+                <label for="difficulty">難易度:</label>
+                <select id="difficulty">
+                    <option value="beginner">初級 (9x9, 地雷10個)</option>
+                    <option value="intermediate">中級 (16x16, 地雷40個)</option>
+                    <option value="expert">上級 (24x20, 地雷99個)</option>
+                    <option value="custom">カスタム</option>
+                </select>
+            </div>
+
+            <div class="custom-settings" id="custom-settings" style="display: none;">
+                <input type="number" id="height" placeholder="高さ" min="5" max="50" value="9">
+                <input type="number" id="width" placeholder="幅" min="5" max="50" value="9">
+                <input type="number" id="mines" placeholder="地雷数" min="1" value="10">
+            </div>
+
+            <button id="new-game">新しいゲーム</button>
+        </div>
+
+        <div class="game-info">
+            <div class="mine-counter">
+                <span>残り地雷数: </span>
+                <span id="mine-count">0</span>
+            </div>
+            <div class="timer">
+                <span>経過時間: </span>
+                <span id="timer">00:00</span>
+            </div>
+        </div>
+
+        <div class="game-board" id="game-board">
+            <!-- ゲーム盤面がここに生成される -->
+        </div>
+
+        <div class="game-status" id="game-status">
+            <!-- ゲーム状態メッセージ -->
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

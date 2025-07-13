@@ -9,7 +9,7 @@ def test_message_functionality():
     game = MinesweeperGame(5, 5, 3)
 
     print("=== メッセージ機能テスト ===")
-    print(game.board.display_board())
+    print(game.display_board())
 
     # 最初の一手
     print("\n1. 最初の一手 (2, 2) を掘る:")
@@ -17,7 +17,7 @@ def test_message_functionality():
     print(f"実行結果: {result}")
 
     print("\n現在の盤面:")
-    print(game.board.display_board())
+    print(game.display_board())
 
     # 同じ場所をもう一度掘ろうとする
     print("\n2. 同じ場所 (2, 2) をもう一度掘ろうとする:")
@@ -30,7 +30,7 @@ def test_message_functionality():
     print(f"実行結果: {result}")
 
     print("\n現在の盤面:")
-    print(game.board.display_board())
+    print(game.display_board())
 
     # フラグの立った場所を掘ろうとする
     print("\n4. フラグの立った場所 (0, 0) を掘ろうとする:")
@@ -43,7 +43,7 @@ def test_message_functionality():
     print(f"実行結果: {result}")
 
     print("\n現在の盤面:")
-    print(game.board.display_board())
+    print(game.display_board())
 
     # 掘られた場所にフラグを立てようとする
     print("\n6. 掘られた場所 (2, 2) にフラグを立てようとする:")

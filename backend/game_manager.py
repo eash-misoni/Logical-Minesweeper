@@ -1,4 +1,4 @@
-﻿from minesweeper import MinesweeperBoard, GameState, CellState
+from minesweeper import MinesweeperBoard, GameState, CellState
 import sys
 
 class MinesweeperGame:
@@ -15,6 +15,60 @@ class MinesweeperGame:
         """
         self.board = MinesweeperBoard(height, width, mine_count)
         self.turn_count = 0
+
+    def get_cell_display(self, row: int, col: int, show_mines: bool = False) -> str:
+        """指定された位置のマスの表示文字を取得（CLI用）"""
+        cell_info = self.board.get_cell_info(row, col)
+        if not cell_info:
+            return "?"
+
+        if show_mines and cell_info['is_mine']:
+            return "*"
+
+        if cell_info['is_flagged']:
+            return "F"
+        elif cell_info['is_hidden']:
+            return "."
+        elif cell_info['is_revealed']:
+            if cell_info['is_mine']:
+                return "*"
+            elif cell_info['mine_number'] == 0:
+                return " "
+            else:
+                return str(cell_info['mine_number'])
+
+        return "?"
+
+    def display_board(self, show_mines: bool = False) -> str:
+        """
+        盤面を文字列として表示します（CLI用）
+
+        Args:
+            show_mines: 地雷の位置を表示するか（デバッグ用）
+
+        Returns:
+            str: 盤面の文字列表現
+        """
+        result = []
+
+        # 列番号のヘッダー
+        header = "   " + "".join(f"{i%10}" for i in range(self.board.width))
+        result.append(header)
+
+        # 各行を表示
+        for row in range(self.board.height):
+            row_str = f"{(row%10):2} "
+            for col in range(self.board.width):
+                row_str += self.get_cell_display(row, col, show_mines)
+            result.append(row_str)
+
+        # ゲーム状態の表示
+        if self.board.get_game_state() == GameState.WON:
+            result.append("\n勝利！")
+        elif self.board.get_game_state() == GameState.LOST:
+            result.append("\n敗北...")
+
+        return "\n".join(result)
 
     def display_help(self):
         """ヘルプを表示"""
@@ -125,7 +179,7 @@ class MinesweeperGame:
     def display_game_status(self):
         """ゲーム状態を表示"""
         print(f"\n=== ターン {self.turn_count} ===")
-        print(self.board.display_board())
+        print(self.display_board())
         print(f"残り地雷数: {self.board.get_remaining_mines()}")
 
         # ゲーム終了判定
@@ -136,7 +190,7 @@ class MinesweeperGame:
             else:
                 print("\n💀💀💀 残念...敗北しました 💀💀💀")
                 print("地雷の位置:")
-                print(self.board.display_board(show_mines=True))
+                print(self.display_board(show_mines=True))
 
     def start_game(self):
         """ゲームを開始"""

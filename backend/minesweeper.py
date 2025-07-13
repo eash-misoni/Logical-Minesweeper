@@ -211,61 +211,6 @@ class MinesweeperBoard:
 
         self.game_state = GameState.WON
 
-    def get_cell_display(self, row: int, col: int) -> str:
-        """指定された位置のマスの表示文字を取得"""
-        if not self._is_valid_position(row, col):
-            return "?"
-
-        state = self.cell_states[row][col]
-
-        if state == CellState.FLAGGED:
-            return "F"
-        elif state == CellState.HIDDEN:
-            return "."
-        elif state == CellState.REVEALED:
-            if self.mines[row][col]:
-                return "*"
-            elif self.mine_numbers[row][col] == 0:
-                return " "
-            else:
-                return str(self.mine_numbers[row][col])
-
-        return "?"
-
-    def display_board(self, show_mines: bool = False) -> str:
-        """
-        盤面を文字列として表示します
-
-        Args:
-            show_mines: 地雷の位置を表示するか（デバッグ用）
-
-        Returns:
-            str: 盤面の文字列表現
-        """
-        result = []
-
-        # 列番号のヘッダー
-        header = "   " + "".join(f"{i%10}" for i in range(self.width))
-        result.append(header)
-
-        # 各行を表示
-        for row in range(self.height):
-            row_str = f"{(row%10):2} "
-            for col in range(self.width):
-                if show_mines and self.mines[row][col]:
-                    row_str += "*"
-                else:
-                    row_str += self.get_cell_display(row, col)
-            result.append(row_str)
-
-        # ゲーム状態の表示
-        if self.game_state == GameState.WON:
-            result.append("\n勝利！")
-        elif self.game_state == GameState.LOST:
-            result.append("\n敗北...")
-
-        return "\n".join(result)
-
     def get_remaining_mines(self) -> int:
         """残りの地雷数を取得（地雷数-フラグ数）"""
         flagged_count = sum(
@@ -283,22 +228,26 @@ class MinesweeperBoard:
         """現在のゲーム状態を取得"""
         return self.game_state
 
+    def get_cell_info(self, row: int, col: int) -> dict:
+        """指定された位置のセル情報を辞書形式で取得（API用）"""
+        if not self._is_valid_position(row, col):
+            return None
 
-# 使用例とテスト用のコード
-if __name__ == "__main__":
-    # 20x16の盤面に40個の地雷で新しいゲームを開始
-    board = MinesweeperBoard(20, 16, 40)
+        return {
+            'state': self.cell_states[row][col],
+            'is_mine': self.mines[row][col],
+            'mine_number': self.mine_numbers[row][col],
+            'is_revealed': self.cell_states[row][col] == CellState.REVEALED,
+            'is_flagged': self.cell_states[row][col] == CellState.FLAGGED,
+            'is_hidden': self.cell_states[row][col] == CellState.HIDDEN
+        }
 
-    print("マインスイーパーの盤面（初期状態）:")
-    print(board.display_board())
-
-    # 最初の一手（5, 5）を掘る
-    print(f"\n位置 (5, 5) を掘ります...")
-    success = board.dig(5, 5)
-    print(f"結果: {'成功' if success else '地雷を踏みました'}")
-
-    print("\n掘った後の盤面:")
-    print(board.display_board())
-
-    print(f"\n残り地雷数: {board.get_remaining_mines()}")
-    print(f"ゲーム状態: {board.get_game_state().name}")
+    def get_board_data(self) -> List[List[dict]]:
+        """全盤面のセル情報を2次元リストで取得（API用）"""
+        board_data = []
+        for row in range(self.height):
+            row_data = []
+            for col in range(self.width):
+                row_data.append(self.get_cell_info(row, col))
+            board_data.append(row_data)
+        return board_data
