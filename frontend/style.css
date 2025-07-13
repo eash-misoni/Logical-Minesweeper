@@ -8,7 +8,7 @@
 
 body {
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     min-height: 100vh;
     padding: 20px;
 }
@@ -17,9 +17,11 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     background: white;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     padding: 30px;
+    display: flex;
+    flex-direction: column;
 }
 
 h1 {
@@ -53,16 +55,16 @@ select, input, button {
 }
 
 button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
     color: white;
     border: none;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 
 .custom-settings {
@@ -80,8 +82,9 @@ button:hover {
     align-items: center;
     margin-bottom: 20px;
     padding: 15px;
-    background: #f8f9fa;
-    border-radius: 10px;
+    background: #f1f3f4;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
 }
 
 .mine-counter, .timer {
@@ -91,23 +94,31 @@ button:hover {
 }
 
 .game-board {
-    display: inline-block;
+    display: block;
     margin: 0 auto;
-    border: 3px solid #333;
-    border-radius: 10px;
+    border: 2px solid #6c757d;
+    border-radius: 8px;
     overflow: hidden;
-    background: #bbb;
+    background: #e9ecef;
+    text-align: center;
+    width: fit-content;
+    order: 2;
+}
+
+.game-board:empty {
+    display: none;
 }
 
 .board-row {
     display: flex;
+    justify-content: center;
 }
 
 .cell {
     width: 30px;
     height: 30px;
-    border: 2px outset #bbb;
-    background: #ccc;
+    border: 1px solid #ced4da;
+    background: #f8f9fa;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -115,36 +126,37 @@ button:hover {
     font-size: 14px;
     cursor: pointer;
     user-select: none;
-    transition: all 0.1s;
+    transition: all 0.2s;
 }
 
 .cell:hover {
-    background: #ddd;
+    background: #e9ecef;
+    border-color: #adb5bd;
 }
 
 .cell.revealed {
-    border: 1px inset #999;
-    background: #fff;
+    border: 1px solid #dee2e6;
+    background: #ffffff;
 }
 
 .cell.flagged {
-    background: #ff6b6b;
+    background: #dc3545;
     color: white;
 }
 
 .cell.mine {
-    background: #ff4757;
+    background: #6c757d;
     color: white;
 }
 
-.cell.number-1 { color: #0099ff; }
-.cell.number-2 { color: #00ff00; }
-.cell.number-3 { color: #ff0000; }
-.cell.number-4 { color: #000080; }
-.cell.number-5 { color: #800000; }
-.cell.number-6 { color: #008080; }
-.cell.number-7 { color: #000000; }
-.cell.number-8 { color: #808080; }
+.cell.number-1 { color: #6f42c1; }
+.cell.number-2 { color: #20c997; }
+.cell.number-3 { color: #fd7e14; }
+.cell.number-4 { color: #0d6efd; }
+.cell.number-5 { color: #dc3545; }
+.cell.number-6 { color: #198754; }
+.cell.number-7 { color: #495057; }
+.cell.number-8 { color: #6c757d; }
 
 .game-status {
     text-align: center;
@@ -153,6 +165,8 @@ button:hover {
     border-radius: 10px;
     font-size: 18px;
     font-weight: bold;
+    order: 1;
+    margin-bottom: 20px;
 }
 
 .game-status.won {
