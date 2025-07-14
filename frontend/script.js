@@ -6,6 +6,7 @@ class WebMinesweeper {
         this.timer = 0;
         this.timerInterval = null;
         this.gameStarted = false;
+        this.gameState = 'PLAYING'; // ゲーム状態を追跡
 
         this.initializeEventListeners();
     }
@@ -61,6 +62,7 @@ class WebMinesweeper {
 
             const data = await response.json();
             this.gameId = data.game_id;
+            this.gameState = 'PLAYING'; // ゲーム状態をリセット
             this.renderBoard(data.board_data);
             this.updateGameInfo(data);
             this.resetTimer();
@@ -123,7 +125,7 @@ class WebMinesweeper {
     }
 
     async handleCellClick(event) {
-        if (!this.gameId) return;
+        if (!this.gameId || this.gameState !== 'PLAYING') return; // ゲーム終了後はクリック無効
 
         const cell = event.target;
         const row = parseInt(cell.dataset.row);
@@ -160,7 +162,7 @@ class WebMinesweeper {
     async handleRightClick(event) {
         event.preventDefault();
 
-        if (!this.gameId) return;
+        if (!this.gameId || this.gameState !== 'PLAYING') return; // ゲーム終了後はクリック無効
 
         const cell = event.target;
         const row = parseInt(cell.dataset.row);
@@ -194,6 +196,9 @@ class WebMinesweeper {
 
     updateGameStatus(data) {
         const statusDiv = document.getElementById('game-status');
+        
+        // ゲーム状態を更新
+        this.gameState = data.game_state;
 
         if (data.game_state === 'WON') {
             statusDiv.textContent = '🎉 おめでとうございます！勝利しました！ 🎉';
