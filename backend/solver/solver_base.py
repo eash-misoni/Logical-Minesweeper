@@ -5,52 +5,40 @@
 
 from abc import ABC, abstractmethod
 from typing import Optional
-from solver_board_view import SolverBoardView
-from solver_command import SolverCommand
-from solver_move import SolverMove
+from .solver_board_view import SolverBoardView
+from .solver_command import SolverCommand, SolverAction
 
 
 class SolverBase(ABC):
-    """全てのソルバーの基底クラス"""
+    """ソルバーの基底クラス"""
 
     def __init__(self):
         self.name = "Base Solver"
         self.board_view: Optional[SolverBoardView] = None
 
-    @abstractmethod
     def set_board(self, solver_board_view: SolverBoardView):
-        """盤面を設定
+        """盤面を設定（標準実装）
 
         Args:
-            solver_board_view: ソルバー用の安全な盤面ビュー
+            solver_board_view: ソルバーが利用できる盤面情報
         """
-        pass
+        self.board_view = solver_board_view
 
     @abstractmethod
     def find_moves(self):
         """
         盤面を分析して次の手を検出・準備
-        実装固有のロジックでキューやリストに手を追加
+        実装固有のロジックでキューやリストに手を保持しておく
         """
         pass
 
     @abstractmethod
-    def get_next_move(self) -> SolverMove:
+    def get_next_move(self) -> SolverCommand:
         """
-        次の手を内部形式で取得
+        find_movesで検出された手から次の手を取得
 
         Returns:
-            次に実行すべき手（内部データ構造）
-        """
-        pass
-
-    @abstractmethod
-    def get_next_command(self) -> SolverCommand:
-        """
-        次の手を汎用コマンド形式で取得
-
-        Returns:
-            次に実行すべきコマンド（外部インターフェース）
+            次に実行すべきコマンド
         """
         pass
 
@@ -72,3 +60,41 @@ class SolverBase(ABC):
     def get_solver_name(self) -> str:
         """ソルバーの名前を取得"""
         return self.name
+
+    def _is_command_valid(self, command: SolverCommand) -> bool:
+        """コマンドが有効かチェック（共通実装）
+
+        Args:
+            command: 検証対象のコマンド
+
+        Returns:
+            有効ならTrue、無効ならFalse
+        """
+        # NO_MOVEは常に有効
+        if command.action == SolverAction.NO_MOVE:
+            return True
+
+        # 座標が設定されていない場合は無効
+        if command.row is None or command.col is None:
+            return False
+
+        # 盤面が設定されていない場合は無効
+        if self.board_view is None:
+            return False
+
+        # 範囲外チェック
+        if not self.board_view.is_valid_position(command.row, command.col):
+            return False
+
+        from minesweeper import CellState
+
+        cell_state = self.board_view.cell_states[command.row][command.col]
+
+        if command.action == SolverAction.DIG:
+            # 掘る行動は未発見のセルのみ有効
+            return cell_state == CellState.HIDDEN
+        elif command.action == SolverAction.FLAG:
+            # フラグ行動は未発見セルまたはフラグ済みセル（トグル）で有効
+            return cell_state == CellState.HIDDEN or cell_state == CellState.FLAGGED
+
+        return False

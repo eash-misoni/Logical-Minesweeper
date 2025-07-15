@@ -18,12 +18,12 @@ if TYPE_CHECKING:
 class SolverBoardView:
     """ソルバー用の盤面情報"""
 
-    def __init__(self, height: int, width: int, cell_states: List[List[CellState]]):
+    def __init__(self, height: int, width: int, cell_states: List[List[CellState]],
+                visible_mine_numbers: List[List[Optional[int]]]):
         self.height = height
         self.width = width
         self.cell_states = cell_states
-        # 初期状態では地雷数は不明（Noneで表現）
-        self.visible_mine_numbers: List[List[Optional[int]]] = [[None for _ in range(width)] for _ in range(height)]
+        self.visible_mine_numbers = visible_mine_numbers
 
     def update_mine_number(self, row: int, col: int, mine_number: int):
         """発見されたセルの地雷数を更新"""

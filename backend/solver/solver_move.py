@@ -1,22 +1,15 @@
 ﻿"""
 ソルバーで使用する内部データ構造
-SolverMoveとSolverActionTypeの定義
+SolverMoveの定義
 """
 
-from enum import Enum
-
-
-class SolverActionType(Enum):
-    """ソルバーが確定した行動の種類"""
-    SAFE_DIG = "safe_dig"          # 100%安全に掘れる
-    CERTAIN_FLAG = "certain_flag"  # 100%地雷確定
-    NO_MOVE = "no_move"           # 確定できない
+from .solver_command import SolverAction
 
 
 class SolverMove:
     """ソルバーが確定した手の情報"""
 
-    def __init__(self, row: int, col: int, action: SolverActionType):
+    def __init__(self, row: int, col: int, action: SolverAction):
         self.row = row
         self.col = col
         self.action = action

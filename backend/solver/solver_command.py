@@ -13,6 +13,7 @@ class SolverAction(Enum):
     DIG = "dig"           # セルを掘る
     FLAG = "flag"         # フラグを設置/解除
     NO_MOVE = "no_move"   # 論理的に確定する手がない
+    QUIT = "quit"         # ユーザーが終了を選択
 
 
 @dataclass

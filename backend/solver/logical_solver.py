@@ -11,10 +11,9 @@ import os
 # 親ディレクトリのminesweeperモジュールをインポートするための設定
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from minesweeper import CellState
-from solver_board_view import SolverBoardView
-from solver_command import SolverCommand, SolverAction
-from solver_move import SolverMove, SolverActionType
-from solver_base import SolverBase
+from .solver_board_view import SolverBoardView
+from .solver_command import SolverCommand, SolverAction
+from .solver_base import SolverBase
 
 
 class LogicalSolver(SolverBase):
@@ -23,16 +22,8 @@ class LogicalSolver(SolverBase):
     def __init__(self):
         super().__init__()
         self.name = "Logical Certainty Solver"
-        self.action_queue = deque()  # 確定した行動のキュー
+        self.action_queue = deque()  # 確定した行動のキュー（SolverCommand）
         self.previous_board_state: Optional[List[List[CellState]]] = None  # 前回の盤面状態
-
-    def set_board(self, solver_board_view: SolverBoardView):
-        """盤面を設定（ソルバー用ビューとして）
-
-        Args:
-            solver_board_view: SolverBoardViewインスタンス
-        """
-        self.board_view = solver_board_view
 
     def find_moves(self):
         """
@@ -51,7 +42,7 @@ class LogicalSolver(SolverBase):
                         changed_cells.append((row, col))
         else:
             # 差分を検出
-            changed_cells = self._detect_changes(self.previous_board_state, self.board_view.cell_states)
+            changed_cells = self._detect_changes(self.board_view.cell_states)
 
         # 差分があるセルについて分析
         for row, col in changed_cells:
@@ -60,52 +51,34 @@ class LogicalSolver(SolverBase):
         # 現在の状態を保存（深いコピーを作成）
         self.previous_board_state = [row[:] for row in self.board_view.cell_states]
 
-    def get_next_move(self) -> SolverMove:
+    def get_next_move(self) -> SolverCommand:
         """
-        キューから次の有効な確定手を取得
-        基底クラスのget_next_moveメソッドの実装
+        次の論理的確定手を取得
 
         Returns:
-            次に実行すべき確定手
+            実行すべきソルバーコマンド
         """
         if self.board_view is None:
             raise ValueError("盤面が設定されていません")
 
         while self.action_queue:
-            move = self.action_queue.popleft()
+            command = self.action_queue.popleft()
 
             # 行動が有効かチェック
-            if self._is_move_valid(move):
-                return move
+            if self._is_command_valid(command):
+                return command
             # 無効な場合は次の行動を試す
 
         # キューが空または全て無効
-        return SolverMove(-1, -1, SolverActionType.NO_MOVE)
+        return SolverCommand.no_move()
 
-    def get_next_command(self) -> SolverCommand:
-        """
-        次の論理的確定手を汎用的なコマンド形式で取得
-
-        Returns:
-            実行すべきソルバーコマンド
-        """
-        move = self.get_next_move()
-
-        if move.action == SolverActionType.SAFE_DIG:
-            return SolverCommand.dig(move.row, move.col)
-        elif move.action == SolverActionType.CERTAIN_FLAG:
-            return SolverCommand.flag(move.row, move.col)
-        else:
-            return SolverCommand.no_move()
-
-    def _detect_changes(self, previous_state: List[List[CellState]],
-                       current_state: List[List[CellState]]) -> List[Tuple[int, int]]:
+    def _detect_changes(self, current_state: List[List[CellState]]) -> List[Tuple[int, int]]:
         """前回から変化したセルを検出"""
         changed_cells = []
 
         for row in range(len(current_state)):
             for col in range(len(current_state[0])):
-                if previous_state[row][col] != current_state[row][col]:
+                if self.previous_board_state[row][col] != current_state[row][col]:
                     # 新たに発見されたセルのみを対象とする
                     if current_state[row][col] == CellState.REVEALED:
                         changed_cells.append((row, col))
@@ -136,36 +109,20 @@ class LogicalSolver(SolverBase):
 
         hidden_count = len(hidden_neighbors)
 
-        # ここに論理判定のロジックを実装してください
-        # 例：
-        # if flagged_count == mine_number and hidden_count > 0:
-        #     for r, c in hidden_neighbors:
-        #         self._add_to_queue(LogicalMove(r, c, LogicalAction.SAFE_DIG))
-        # elif (flagged_count + hidden_count) == mine_number and hidden_count > 0:
-        #     for r, c in hidden_neighbors:
-        #         self._add_to_queue(LogicalMove(r, c, LogicalAction.CERTAIN_FLAG))
+        # 論理判定のロジック
+        if flagged_count == mine_number and hidden_count > 0:
+            # フラグ数 = 地雷数 → 残りは安全
+            for r, c in hidden_neighbors:
+                self._add_to_queue(SolverCommand.dig(r, c))
+        elif (flagged_count + hidden_count) == mine_number and hidden_count > 0:
+            # フラグ数 + 未発見数 = 地雷数 → 残り全て地雷
+            for r, c in hidden_neighbors:
+                self._add_to_queue(SolverCommand.flag(r, c))
 
-    def _add_to_queue(self, move: SolverMove):
+    def _add_to_queue(self, command: SolverCommand):
         """重複チェックしてキューに追加"""
-        if move not in self.action_queue:
-            self.action_queue.append(move)
-
-    def _is_move_valid(self, move: SolverMove) -> bool:
-        """行動が有効かチェック"""
-        # 範囲外チェック
-        if not self.board_view.is_valid_position(move.row, move.col):
-            return False
-
-        cell_state = self.board_view.cell_states[move.row][move.col]
-
-        if move.action == SolverActionType.SAFE_DIG:
-            # 掘る行動は未発見のセルのみ有効
-            return cell_state == CellState.HIDDEN
-        elif move.action == SolverActionType.CERTAIN_FLAG:
-            # フラグ行動は未発見のセルのみ有効
-            return cell_state == CellState.HIDDEN
-
-        return False
+        if command not in self.action_queue:
+            self.action_queue.append(command)
 
     def has_moves(self) -> bool:
         """
