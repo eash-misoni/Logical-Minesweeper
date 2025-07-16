@@ -80,7 +80,7 @@ class SolverManager:
 
         if command.action == SolverAction.NO_MOVE:
             return False, command
-        
+
         if command.action == SolverAction.QUIT:
             return False, command
 
@@ -113,34 +113,61 @@ class SolverManager:
             # 盤面分析して新しい確定手を検出
             self.analyze_board(board)
 
-            # 確定手があれば実行
-            command = self.solver.get_next_move()
+            # キューにある確定手を全て実行
+            batch_executed = []
+            while self.solver.has_moves():
+                command = self.solver.get_next_move()
 
-            if command.action == SolverAction.NO_MOVE:
-                # 確定する手がない→こっから手動(運ゲー)
+                if command.action == SolverAction.NO_MOVE:
+                    break
+
+                # 既に探索済みの場合はスキップ
+                if self._is_already_revealed(board, command):
+                    continue
+
+                # ゲーム盤面で実行
+                success = True
+                try:
+                    if command.action == SolverAction.DIG:
+                        success = board.dig(command.row, command.col)
+                    elif command.action == SolverAction.FLAG:
+                        board.toggle_flag(command.row, command.col)
+                except Exception as e:
+                    print(f"Error executing command: {e}")
+                    success = False
+
+                if not success:
+                    break
+
+                batch_executed.append(command)
+
+                # ゲーム終了チェック
+                if board.is_game_over():
+                    break
+
+            # このバッチで何も実行されなかった場合は終了
+            if not batch_executed:
                 break
 
-            # ゲーム盤面で実行
-            success = True
-            try:
-                if command.action == SolverAction.DIG:
-                    success = board.dig(command.row, command.col)
-                elif command.action == SolverAction.FLAG:
-                    board.toggle_flag(command.row, command.col)
-            except Exception as e:
-                print(f"Error executing command: {e}")
-                success = False
-
-            if not success:
-                break
-
-            executed_commands.append(command)
+            executed_commands.extend(batch_executed)
 
             # ゲーム終了チェック
             if board.is_game_over():
                 break
 
         return executed_commands
+
+    def _is_already_revealed(self, board: MinesweeperBoard, command: SolverCommand) -> bool:
+        """コマンドのセルが既に掘られているかチェック"""
+        cell_info = board.get_cell_info(command.row, command.col)
+        if not cell_info:
+            return False
+
+        if command.action == SolverAction.DIG or command.action == SolverAction.FLAG:
+            # 既に掘られている場合はtrue
+            return cell_info['is_revealed']
+
+        return False
 
     def has_moves(self) -> bool:
         """ソルバーに実行可能な手があるかチェック"""

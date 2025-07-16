@@ -4,6 +4,7 @@
 
 import sys
 import os
+import copy
 
 # 親ディレクトリのminesweeperモジュールをインポートするための設定
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,11 +16,14 @@ from solver.solver_command import SolverAction
 
 
 def test_logical_solver():
-    print("=== 論理ソルバーテスト ===")
+    print("=== 論理ソルバー実行テスト ===")
 
     # 小さな盤面でテスト
-    board = MinesweeperBoard(6, 6, 5)
-    print(f"盤面を初期化しました (6x6, 地雷5個)")
+    h = 20
+    w = 20
+    m = 180
+    board = MinesweeperBoard(h, w, m)
+    print(f"盤面を初期化しました ({h}x{w}, 地雷{m}個)")
 
     # 論理ソルバーを使用
     solver = LogicalSolver()
@@ -29,53 +33,68 @@ def test_logical_solver():
     board.dig(2, 2)
     print("最初のセル (2,2) を掘りました")
 
-    print(f"現在のゲーム状態: {board.get_game_state()}")
-    print(f"残り地雷数: {board.get_remaining_mines()}")
+    # 初手後の盤面をコピーして保存
+    initial_board = copy.deepcopy(board)
 
-    step_count = 0
-    max_steps = 50  # 無限ループ防止
 
-    while step_count < max_steps:
-        print(f"\n--- ステップ {step_count + 1} ---")
+    print("\n実行前盤面:")
+    display_board(board)
 
-        # 現在の盤面を表示
-        display_board(board)
+    # solve_until_manual_needed()で自動解法を一気に実行
+    print("\n論理ソルバーを実行中...")
+    executed_commands = manager.solve_until_manual_needed(board)
 
-        # 論理解法で確定手を分析
-        manager.analyze_board(board)
+    if not executed_commands:
+        print("論理的に確定する手がありませんでした")
+    else:
+        print(f"\n{len(executed_commands)} 手実行しました:")
+        for i, command in enumerate(executed_commands, 1):
+            print(f"  {i}. {command.action.value} ({command.row}, {command.col})")
 
-        # キューにコマンドがあるかチェック
-        if not manager.has_moves():
-            print("論理的に確定する手がありません")
-            break
+    print("\n実行後盤面:")
+    display_board(board)
 
-        # 論理解法で一手実行
-        success, command = manager.execute_step(board)
+    # ゲーム状態をチェック
+    if board.get_game_state() == GameState.WON:
+        print("\n🎉 ゲームクリア！")
+    elif board.get_game_state() == GameState.LOST:
+        print("\n💥 地雷を踏みました...")
+    else:
+        print("\n論理的に確定する手がなくなりました（手動介入が必要）")
 
-        if not success:
-            if command.action == SolverAction.QUIT:
-                print("ゲームを終了します")
+    # 盤面復元のテスト
+    if executed_commands:
+        print("\n=== 盤面復元テスト ===")
+        print("初手後の盤面から解法手順を再実行して復元します")
+
+        # 初手後の状態から復元開始
+        restored_board = initial_board
+        print(f"\n復元開始（初手後）:")
+        display_board(restored_board)
+
+        # executed_commandsを順番に実行
+        for i, command in enumerate(executed_commands, 1):
+            print(f"\n--- ステップ {i}: {command.action.value} ({command.row}, {command.col}) ---")
+
+            if command.action == SolverAction.DIG:
+                success = restored_board.dig(command.row, command.col)
+                if not success:
+                    print(f"掘削失敗: ({command.row}, {command.col})")
+                    break
+            elif command.action == SolverAction.FLAG:
+                restored_board.toggle_flag(command.row, command.col)
+
+            display_board(restored_board)
+
+            # ゲーム終了チェック
+            if restored_board.is_game_over():
                 break
-            elif command.action == SolverAction.NO_MOVE:
-                print("論理的に確定する手がありません")
-                break
-            else:
-                print(f"操作に失敗しました。コマンド: {command.action.value}")
-                if hasattr(command, 'row') and hasattr(command, 'col'):
-                    print(f"座標: ({command.row}, {command.col})")
-                break
 
-        print(f"実行されました: {command.action.value} ({command.row}, {command.col})")
-
-        # ゲーム状態をチェック
-        if board.get_game_state() == GameState.WON:
-            print("🎉 ゲームクリア！")
-            break
-        elif board.get_game_state() == GameState.LOST:
-            print("💥 地雷を踏みました...")
-            break
-
-        step_count += 1
+        # 復元盤面と最終盤面が同じか確認
+        if restored_board.get_game_state() == board.get_game_state():
+            print("\n復元盤面と最終盤面は一致しました")
+        else:
+            print("\n復元盤面と最終盤面は一致しませんでした")
 
     print(f"\n最終盤面(実際の地雷位置):")
     display_board(board, show_mines=True)

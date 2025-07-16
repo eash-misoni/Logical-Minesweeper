@@ -79,9 +79,12 @@ class LogicalSolver(SolverBase):
         for row in range(len(current_state)):
             for col in range(len(current_state[0])):
                 if self.previous_board_state[row][col] != current_state[row][col]:
-                    # 新たに発見されたセルのみを対象とする
+                    # 新たに発見されたセルを対象とする
                     if current_state[row][col] == CellState.REVEALED:
                         changed_cells.append((row, col))
+                    # フラグを立てたセルの周囲を対象とする
+                    elif current_state[row][col] == CellState.FLAGGED:
+                        changed_cells.extend(self.board_view.get_neighbors(row, col))
 
         return changed_cells
 
